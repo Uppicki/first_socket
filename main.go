@@ -3,8 +3,7 @@ package main
 import "first_socket/cmd"
 
 func main() {
-	srv := cmd.NewApp()
+	server := cmd.NewApp()
 
-	srv.Run()
-
+	server.Run()
 }

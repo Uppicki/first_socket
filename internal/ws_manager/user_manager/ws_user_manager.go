@@ -1,8 +1,11 @@
 package wsusermanager
 
 import (
+	"first_socket/internal/domain"
+	"first_socket/internal/middleware"
 	"first_socket/internal/repositories"
 	wsmanager "first_socket/internal/ws_manager"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,8 +17,11 @@ type WSUserManager struct {
 
 func (manager *WSUserManager) ServeWS(ctx *gin.Context) {
 
-	user, err := manager.repository.GetUserByName("vovav")
-	if err != nil {
+	ctxUser, _ := ctx.Get(middleware.UserContextKey)
+
+	user, ok := ctxUser.(*domain.User)
+
+	if !ok {
 		return
 	}
 
@@ -31,6 +37,7 @@ func (manager *WSUserManager) ServeWS(ctx *gin.Context) {
 	client := NewWSUserClient(conn, user)
 
 	manager.hub.addClient(client)
+	fmt.Println("asd")
 }
 
 func NewWSUserManager(

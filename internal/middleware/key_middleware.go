@@ -8,6 +8,7 @@ import (
 )
 
 const apiKeyHeader = "Authorization"
+const UserContextKey = "user"
 
 func KeyMIddleware(
 	repository *repositories.UserRepository,
@@ -15,12 +16,14 @@ func KeyMIddleware(
 	return func(ctx *gin.Context) {
 		key := ctx.GetHeader(apiKeyHeader)
 
-		_, err := repository.GetUserByName(key)
+		user, err := repository.GetUserByName(key)
 
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
 			return
 		}
+
+		ctx.Set(UserContextKey, user)
 
 		ctx.Next()
 	}

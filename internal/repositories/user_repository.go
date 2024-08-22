@@ -18,6 +18,12 @@ func (repository *UserRepository) GetAllUsers() map[string]*domain.User {
 	return users
 }
 
+func (repository *UserRepository) GetUserByName(
+	name string,
+) (*domain.User, error) {
+	return repository.store.GetUserByName(name)
+}
+
 func NewUserRepository(store *store.Store) *UserRepository {
 	return &UserRepository{
 		BaseRepository: NewBaseRepository(store),

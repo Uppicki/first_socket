@@ -2,4 +2,4 @@ package wsmanager
 
 import "github.com/gorilla/websocket"
 
-var upgrader = websocket.Upgrader{}
+var Upgrader = websocket.Upgrader{}

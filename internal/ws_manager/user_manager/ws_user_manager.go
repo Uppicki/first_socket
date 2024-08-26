@@ -5,7 +5,6 @@ import (
 	"first_socket/internal/middleware"
 	"first_socket/internal/repositories"
 	wsmanager "first_socket/internal/ws_manager"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,8 +35,45 @@ func (manager *WSUserManager) ServeWS(ctx *gin.Context) {
 
 	client := NewWSUserClient(conn, user)
 
-	manager.hub.addClient(client)
-	fmt.Println("asd")
+	manager.hub.AddClient(client)
+	go manager.listen(client)
+	client.Run()
+}
+
+func (manager *WSUserManager) listen(client *WSUserClient) {
+	for {
+		select {
+		case message := <-client.receivedMessage:
+			err := message.Map(
+				func() error {
+					innerClient, err := manager.hub.GetClientByName(message.Owner)
+					if err != nil {
+						return err
+					}
+					manager.hub.SendWithoutClient(
+						innerClient,
+						message,
+					)
+					return nil
+				},
+				func() error {
+					innerClient, err := manager.hub.GetClientByName(message.Owner)
+					if err != nil {
+						return nil
+					}
+
+					manager.hub.RemoveClient(innerClient)
+					manager.hub.SendAll(message)
+					return nil
+				},
+			)
+
+			if err != nil {
+				break
+			}
+		}
+	}
+
 }
 
 func NewWSUserManager(

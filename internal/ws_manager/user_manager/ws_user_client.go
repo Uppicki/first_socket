@@ -10,9 +10,11 @@ import (
 )
 
 type WSUserClient struct {
-	conn           *websocket.Conn
-	user           *domain.User
-	sendingMessage chan *wsmessage.WSMessage
+	conn            *websocket.Conn
+	user            *domain.User
+	sendMessage     chan wsmessage.WSMessage
+	receivedMessage chan wsmessage.WSMessage
+	isActive        bool
 }
 
 func (client *WSUserClient) GetNameOwnerUser() string {
@@ -21,41 +23,71 @@ func (client *WSUserClient) GetNameOwnerUser() string {
 
 func (client *WSUserClient) readerRun() {
 	defer func() {
-		client.conn.Close()
+		if client.isActive {
+			client.receivedMessage <- wsmessage.WSMessage{
+				MessageType: wsmessage.DisconnectedType,
+				Owner:       client.user.Name,
+			}
+			client.isActive = false
+		}
+
+		fmt.Sprintf("reader close %s", client.user.Name)
 	}()
 
+	client.receivedMessage <- wsmessage.WSMessage{
+		MessageType: wsmessage.ConnectedType,
+		Owner:       client.user.Name,
+	}
+
 	for {
+		var message wsmessage.WSMessage
+
+		err := client.conn.ReadJSON(&message)
+
+		if err != nil {
+			fmt.Println("asd")
+			break
+		}
+
+		message.Owner = client.user.Name
+
+		client.receivedMessage <- message
 
 	}
 }
 
 func (client *WSUserClient) writerRun() {
 	defer func() {
-		client.conn.Close()
+		fmt.Sprintf("writer close %s", client.user.Name)
+
 	}()
 
-	fmt.Println("asdasdasd")
-
 	for {
-		message, ok := <-client.sendingMessage
-		fmt.Println(ok)
+		message, ok := <-client.sendMessage
 		if ok {
 			if err := client.conn.WriteJSON(
 				wsresponses.ConnectedResponse{
 					Username:      message.Owner,
-					ConnectedType: wsresponses.ConnectedResponseType(message.Message),
+					ConnectedType: wsresponses.ConnectedResponseType(message.MessageType),
 				},
 			); err != nil {
-				fmt.Println(err)
 			}
 		}
 	}
 
 }
 
-func (client *WSUserClient) run() {
+func (client *WSUserClient) Run() {
+	client.isActive = true
 	go client.readerRun()
 	go client.writerRun()
+}
+
+func (client *WSUserClient) Close() {
+	client.isActive = false
+	client.conn.Close()
+	close(client.sendMessage)
+
 }
 
 func NewWSUserClient(
@@ -63,8 +95,10 @@ func NewWSUserClient(
 	user *domain.User,
 ) *WSUserClient {
 	return &WSUserClient{
-		conn:           conn,
-		user:           user,
-		sendingMessage: make(chan *wsmessage.WSMessage),
+		conn:            conn,
+		user:            user,
+		sendMessage:     make(chan wsmessage.WSMessage),
+		receivedMessage: make(chan wsmessage.WSMessage),
+		isActive:        false,
 	}
 }

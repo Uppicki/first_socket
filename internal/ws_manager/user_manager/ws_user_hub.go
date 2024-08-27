@@ -3,7 +3,6 @@ package wsusermanager
 import (
 	"errors"
 	wsmessage "first_socket/internal/ws_manager/ws_message"
-
 )
 
 type WSUserHub struct {
@@ -20,6 +19,18 @@ func (hub *WSUserHub) GetClientByName(name string) (*WSUserClient, error) {
 		return nil, errors.New("Client doesn`t exsist")
 	}
 	return client, nil
+}
+
+func (hub *WSUserHub) GetClientNamesWithoutClient(
+	client *WSUserClient,
+) map[string]bool {
+	res := make(map[string]bool, len(hub.clients)-1)
+	for _, c := range hub.clients {
+		if c.user.Name != client.user.Name {
+			res[c.user.Name] = true
+		}
+	}
+	return res
 }
 
 func (hub *WSUserHub) RemoveClient(client *WSUserClient) {
@@ -54,6 +65,13 @@ func (hub *WSUserHub) SendWithoutClient(
 			cl.sendMessage <- message
 		}
 	}
+}
+
+func (hub *WSUserHub) SendClient(
+	client *WSUserClient,
+	message wsmessage.WSMessage,
+) {
+	client.sendMessage <- message
 }
 
 func NewWSUserHub() *WSUserHub {

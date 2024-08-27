@@ -18,6 +18,24 @@ func (repository *UserRepository) GetAllUsers() map[string]*domain.User {
 	return users
 }
 
+func (repository *UserRepository) GetUsernamesWithoutUser(
+	name string,
+) []string {
+	users := repository.store.GetAllUsers()
+
+	if _, ok := users[name]; ok {
+		delete(users, name)
+	}
+
+	usernames := make([]string, 0)
+
+	for key, _ := range users {
+		usernames = append(usernames, key)
+	}
+
+	return usernames
+}
+
 func (repository *UserRepository) GetUserByName(
 	name string,
 ) (*domain.User, error) {

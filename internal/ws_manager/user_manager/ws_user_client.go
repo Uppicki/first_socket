@@ -30,8 +30,6 @@ func (client *WSUserClient) readerRun() {
 			}
 			client.isActive = false
 		}
-
-		fmt.Sprintf("reader close %s", client.user.Name)
 	}()
 
 	client.receivedMessage <- wsmessage.WSMessage{
@@ -49,6 +47,8 @@ func (client *WSUserClient) readerRun() {
 			break
 		}
 
+		fmt.Println(message)
+
 		message.Owner = client.user.Name
 
 		client.receivedMessage <- message
@@ -58,23 +58,54 @@ func (client *WSUserClient) readerRun() {
 
 func (client *WSUserClient) writerRun() {
 	defer func() {
-		fmt.Sprintf("writer close %s", client.user.Name)
 
 	}()
 
 	for {
 		message, ok := <-client.sendMessage
 		if ok {
-			if err := client.conn.WriteJSON(
-				wsresponses.ConnectedResponse{
-					Username:      message.Owner,
-					ConnectedType: wsresponses.ConnectedResponseType(message.MessageType),
+			message.Map(
+				// Connected response
+				func() error {
+					innerErr := client.conn.WriteJSON(
+						wsresponses.ConnectedResponse{
+							Username:      message.Owner,
+							ConnectedType: wsresponses.ConnectedResponseType(message.MessageType),
+						},
+					)
+					return innerErr
 				},
-			); err != nil {
-			}
-		}
-	}
+				// Disconnected response
+				func() error {
+					innerErr := client.conn.WriteJSON(
+						wsresponses.ConnectedResponse{
+							Username:      message.Owner,
+							ConnectedType: wsresponses.ConnectedResponseType(message.MessageType),
+						},
+					)
+					return innerErr
+				},
+				// Users info response
+				func() error {
+					m, innerOk := message.Message.(wsmessage.UsersInfoMessage)
 
+					if !innerOk {
+						return nil
+					}
+
+					innerErr := client.conn.WriteJSON(
+						wsresponses.NewUsersInfoResponse(
+							m.AuthorizedUSers,
+							m.ConnectedUsers,
+						),
+					)
+
+					return innerErr
+				},
+			)
+		}
+
+	}
 }
 
 func (client *WSUserClient) Run() {

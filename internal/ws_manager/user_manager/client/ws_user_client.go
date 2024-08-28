@@ -43,6 +43,7 @@ func (client *WSUserClient) Close() {
 func (client *WSUserClient) Send(message wsmessage.WSMessage) {
 	select {
 	case client.sendMessage <- message:
+	default:
 	}
 }
 

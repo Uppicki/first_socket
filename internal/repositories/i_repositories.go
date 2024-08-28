@@ -4,8 +4,10 @@ import wsclient "first_socket/internal/ws_manager/ws_client"
 
 type IClientRepository interface {
 	AddClient(wsclient.WSClient)
-	GetClientByName(string) wsclient.WSClient
-	GetClients() []wsclient.WSClient
+	RemoveClientByName(string)
+	GetClientNamesWithoutClientName(string) []string
+	GetClientByName(string) (wsclient.WSClient, error)
+	GetClientsWithoutClientName(string) []wsclient.WSClient
 }
 
 type IChatRepository interface {

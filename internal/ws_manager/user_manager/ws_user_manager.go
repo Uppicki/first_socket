@@ -5,15 +5,39 @@ import (
 	"first_socket/internal/middleware"
 	"first_socket/internal/repositories"
 	wsmanager "first_socket/internal/ws_manager"
+	wsuserclient "first_socket/internal/ws_manager/user_manager/client"
+	wsuserhub "first_socket/internal/ws_manager/user_manager/hub"
+	wshub "first_socket/internal/ws_manager/ws_hub"
 	wsmessage "first_socket/internal/ws_manager/ws_message"
 
 	"github.com/gin-gonic/gin"
 )
 
 type WSUserManager struct {
-	hub            *WSUserHub
+	hub            wshub.WSHub
 	repository     *repositories.UserRepository
-	chatRepository *repositories.ChatRepository
+	chatRepository repositories.IChatRepository
+}
+
+func (manager *WSUserManager) NotifyAboutAuthorized(username string) {
+	message := wsmessage.WSMessage{
+		MessageType: wsmessage.Disauthorized,
+		Owner:       username,
+	}
+
+	manager.hub.SendWithoutClientName(username, message)
+}
+
+func (manager *WSUserManager) Disauthorize(username string) {
+	manager.chatRepository.RemoveUserChats(username)
+
+	message := wsmessage.WSMessage{
+		MessageType: wsmessage.Disauthorized,
+		Owner:       username,
+	}
+
+	manager.hub.RemoveClientByName(username)
+	manager.hub.SendWithoutClientName(username, message)
 }
 
 func (manager *WSUserManager) ServeWS(ctx *gin.Context) {
@@ -35,89 +59,101 @@ func (manager *WSUserManager) ServeWS(ctx *gin.Context) {
 		return
 	}
 
-	client := NewWSUserClient(conn, user)
+	client := wsuserclient.NewWSUserClient(conn, user)
 
 	manager.hub.AddClient(client)
 	go manager.listen(client)
 	client.Run()
 }
 
-func (manager *WSUserManager) listen(client *WSUserClient) {
+func (manager *WSUserManager) listen(client *wsuserclient.WSUserClient) {
+	channel := client.GetReceivedChan()
 	for {
 		select {
-		case message := <-client.receivedMessage:
-			err := message.Map(
-				func() error {
-					innerClient, err := manager.hub.GetClientByName(message.Owner)
-					if err != nil {
-						return err
-					}
+		case message := <-channel:
 
-					selfMessage := manager.createUsersInfoMessage(
-						innerClient,
-					)
-
-					manager.hub.SendClient(
-						innerClient,
-						selfMessage,
-					)
-
-					manager.hub.SendWithoutClient(
-						innerClient,
-						message,
-					)
-					return nil
-				},
-				func() error {
-					innerClient, err := manager.hub.GetClientByName(message.Owner)
-					if err != nil {
-						return nil
-					}
-
-					manager.hub.RemoveClient(innerClient)
-					manager.hub.SendAll(message)
-					return nil
-				},
-				func() error {
-					return nil
-				},
+			message.MapHandler(
+				manager.connectedHandler,
+				manager.disconnectedHandler,
+				manager.usersInfoHandler,
+				manager.chatsInfoHandler,
+				manager.chatMessagesHandler,
+				manager.messageSendHandler,
 			)
-
-			if err != nil {
-				break
-			}
 		}
 	}
 
 }
 
-func (manager *WSUserManager) createUsersInfoMessage(
-	client *WSUserClient,
-) wsmessage.WSMessage {
-	users := manager.repository.GetUsernamesWithoutUser(
-		client.user.Name,
-	)
-	connectedUsers := manager.hub.GetClientNamesWithoutClient(
-		client,
-	)
+func (manager *WSUserManager) connectedHandler(
+	message wsmessage.WSMessage,
+) {
+	manager.hub.SendWithoutClientName(message.Owner, message)
+}
 
-	message := wsmessage.UsersInfoMessage{
-		AuthorizedUSers: users,
-		ConnectedUsers:  connectedUsers,
-	}
+func (manager *WSUserManager) disconnectedHandler(
+	message wsmessage.WSMessage,
+) {
+	manager.hub.RemoveClientByName(message.Owner)
+	manager.hub.SendWithoutClientName(message.Owner, message)
+}
 
-	return wsmessage.WSMessage{
-		MessageType: wsmessage.UsersInfoType,
-		Owner:       client.user.Name,
-		Message:     message,
+func (manager *WSUserManager) usersInfoHandler(
+	message wsmessage.WSMessage,
+	innerMessage wsmessage.UsersInfoMessage,
+) {
+	innerMessage.Users = manager.hub.GetClientsWithoutClientName(message.Owner)
+	manager.hub.SendClientByName(message.Owner, message)
+}
+
+func (manager *WSUserManager) chatsInfoHandler(
+	message wsmessage.WSMessage,
+	innerMessage wsmessage.ChatsInfoMessage,
+) {
+	innerMessage.Chats = manager.chatRepository.GetUserChats(message.Owner)
+	manager.hub.SendClientByName(message.Owner, message)
+}
+
+func (manager *WSUserManager) chatMessagesHandler(
+	message wsmessage.WSMessage,
+	innerMessage wsmessage.ChatMessagesMessage,
+) {
+	innerMessage.Chat = manager.chatRepository.GetChat(
+		message.Owner,
+		innerMessage.Companion,
+	)
+	innerMessage.Messages = manager.chatRepository.GetChatMessages(
+		innerMessage.Chat,
+	)
+	manager.hub.SendClientByName(message.Owner, message)
+}
+
+func (manager *WSUserManager) messageSendHandler(
+	message wsmessage.WSMessage,
+	innerMessage wsmessage.MessageSendMessage,
+) {
+	manager.chatRepository.WriteMessage(innerMessage.ChatID, innerMessage.Message)
+	innerMessage.IsSended = true
+	manager.hub.SendClientByName(message.Owner, message)
+
+	im := wsmessage.MessageNotificationMessage{
+		Message: innerMessage.Message,
 	}
+	m := wsmessage.WSMessage{
+		MessageType: wsmessage.MessageNotification,
+		Owner:       message.Owner,
+		Message:     im,
+	}
+	manager.hub.SendClientByName(innerMessage.Companion, m)
 }
 
 func NewWSUserManager(
-	repository *repositories.UserRepository,
+	userRepo *repositories.UserRepository,
+	chatRepo *repositories.IChatRepository,
 ) *WSUserManager {
 	return &WSUserManager{
-		hub:        NewWSUserHub(),
-		repository: repository,
+		hub:            wsuserhub.NewWSUserHub(),
+		repository:     userRepo,
+		chatRepository: *chatRepo,
 	}
 }

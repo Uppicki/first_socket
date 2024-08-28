@@ -1,6 +1,7 @@
 package wsmessage
 
 import (
+	"errors"
 	wsresponses "first_socket/internal/ws_payload/responses"
 )
 
@@ -79,4 +80,50 @@ func (message *WSMessage) MapToResponse() wsresponses.WSResponse {
 	}
 
 	return response
+}
+
+func (message *WSMessage) MapHandler(
+	connectedFunc func(WSMessage),
+	disconnectedFunc func(WSMessage),
+	usersInfoFunc func(WSMessage, UsersInfoMessage),
+	chatsInfoFunc func(WSMessage, ChatsInfoMessage),
+	chatMessagesFunc func(WSMessage, ChatMessagesMessage),
+	messageSendFunc func(WSMessage, MessageSendMessage),
+) error {
+	var err error
+
+	switch message.MessageType {
+	case Connected:
+		connectedFunc(*message)
+	case Disconnected:
+		disconnectedFunc(*message)
+	case UsersInfo:
+		if innerMessage, ok := message.Message.(UsersInfoMessage); ok {
+			usersInfoFunc(*message, innerMessage)
+		} else {
+			return errors.New("dawncasting error")
+		}
+	case ChatsInfo:
+		if innerMessage, ok := message.Message.(ChatsInfoMessage); ok {
+			chatsInfoFunc(*message, innerMessage)
+		} else {
+			return errors.New("dawncasting error")
+		}
+	case ChatMessages:
+		if innerMessage, ok := message.Message.(ChatMessagesMessage); ok {
+			chatMessagesFunc(*message, innerMessage)
+		} else {
+			return errors.New("dawncasting error")
+		}
+	case MessageSend:
+		if innerMessage, ok := message.Message.(MessageSendMessage); ok {
+			messageSendFunc(*message, innerMessage)
+		} else {
+			return errors.New("dawncasting error")
+		}
+	default:
+		err = errors.New("unsresolved wsmessage type")
+	}
+
+	return err
 }

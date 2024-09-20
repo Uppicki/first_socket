@@ -6,13 +6,10 @@ import (
 )
 
 type WSHub interface {
-	Disauthorize(string)
-
 	AddClient(wsclient.WSClient)
 	RemoveClientByName(string)
 	GetClientsWithoutClientName(string) []string
 
-	SendAll()
 	SendClientByName(string, wsmessage.WSMessage)
 	SendWithoutClientName(string, wsmessage.WSMessage)
 }

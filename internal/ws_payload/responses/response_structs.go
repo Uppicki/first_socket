@@ -30,3 +30,7 @@ type MessageNotificationResponse struct {
 	Owner   string `json:"owner"`
 	Message string `json:"message"`
 }
+
+type ChatDeleteNotificationResponse struct {
+	Chat string `json:"chat_id"`
+}

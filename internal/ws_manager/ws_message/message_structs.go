@@ -18,9 +18,10 @@ type ChatMessagesMessage struct {
 }
 
 type MessageSendMessage struct {
-	ChatID   string
-	IsSended bool
-	Message  string
+	ChatID    string
+	Companion string
+	IsSended  bool
+	Message   string
 }
 
 type MessageNotificationMessage struct {

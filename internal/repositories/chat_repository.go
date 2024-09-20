@@ -2,12 +2,16 @@ package repositories
 
 import "first_socket/internal/store"
 
-type ChatRepository struct {
+type chatRepository struct {
 	*BaseRepository
 }
 
-func NewChatRepository(store *store.Store) *ChatRepository {
-	return &ChatRepository{
+func (repo *chatRepository) RemoveUserChats(name string) {
+	repo.store.RemoveUserChats(name)
+}
+
+func NewChatRepository(store *store.Store) *chatRepository {
+	return &chatRepository{
 		BaseRepository: NewBaseRepository(store),
 	}
 }

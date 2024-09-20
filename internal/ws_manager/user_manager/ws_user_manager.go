@@ -103,6 +103,7 @@ func (manager *WSUserManager) usersInfoHandler(
 	innerMessage wsmessage.UsersInfoMessage,
 ) {
 	innerMessage.Users = manager.hub.GetClientsWithoutClientName(message.Owner)
+	message.Message = innerMessage
 	manager.hub.SendClientByName(message.Owner, message)
 }
 
@@ -111,6 +112,7 @@ func (manager *WSUserManager) chatsInfoHandler(
 	innerMessage wsmessage.ChatsInfoMessage,
 ) {
 	innerMessage.Chats = manager.chatRepository.GetUserChats(message.Owner)
+	message.Message = innerMessage
 	manager.hub.SendClientByName(message.Owner, message)
 }
 
@@ -125,6 +127,7 @@ func (manager *WSUserManager) chatMessagesHandler(
 	innerMessage.Messages = manager.chatRepository.GetChatMessages(
 		innerMessage.Chat,
 	)
+	message.Message = innerMessage
 	manager.hub.SendClientByName(message.Owner, message)
 }
 
@@ -134,6 +137,7 @@ func (manager *WSUserManager) messageSendHandler(
 ) {
 	manager.chatRepository.WriteMessage(innerMessage.ChatID, innerMessage.Message)
 	innerMessage.IsSended = true
+	message.Message = innerMessage
 	manager.hub.SendClientByName(message.Owner, message)
 
 	im := wsmessage.MessageNotificationMessage{

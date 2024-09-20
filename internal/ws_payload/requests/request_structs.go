@@ -5,6 +5,7 @@ type WSChatMessagesRequest struct {
 }
 
 type WSSendMessageRequest struct {
-	ChatId string `json:"chat_id"`
-	Text   string `json:"message_text"`
+	ChatId    string `json:"chat_id"`
+	Companion string `json:"companion"`
+	Text      string `json:"message_text"`
 }

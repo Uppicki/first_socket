@@ -62,6 +62,25 @@ func (store *Store) getChat(user1, user2 *domain.User) (*domain.Chat, error) {
 	return store.chats[chat], nil
 }
 
+func (store *Store) RemoveUserChats(name string) {
+	users := make([]string, 0)
+	chats := make([]string, 0)
+
+	for key, c := range store.realationships[name] {
+		users = append(users, key)
+		chats = append(chats, c)
+	}
+
+	delete(store.realationships, name)
+
+	for _, user := range users {
+		delete(store.realationships[user], name)
+	}
+	for _, chat := range chats {
+		delete(store.chats, chat)
+	}
+}
+
 func NewStore() *Store {
 	users := make(map[string]*domain.User)
 	chats := make(map[string]*domain.Chat)

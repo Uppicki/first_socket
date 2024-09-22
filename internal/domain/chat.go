@@ -8,7 +8,7 @@ type Chat struct {
 
 func NewChat(user1, user2 *User) *Chat {
 	return &Chat{
-		ID:       string(user1.Name + " " + user2.Name),
+		ID:       "",
 		users:    make([]*User, 2),
 		messages: make([]*ChatMessage, 0),
 	}

@@ -42,7 +42,7 @@ func (repository *UserRepository) GetUserByName(
 	return repository.store.GetUserByName(name)
 }
 
-func NewUserRepository(store *store.Store) *UserRepository {
+func NewUserRepository(store *store.IStore) *UserRepository {
 	return &UserRepository{
 		BaseRepository: NewBaseRepository(store),
 	}

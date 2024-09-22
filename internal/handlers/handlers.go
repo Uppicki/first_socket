@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"first_socket/internal/payload/responses"
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
 
 func HelloHandler(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, responses.HelloResponse{
-		Message: "Hello world",
-	})
+	fmt.Println("Asd")
+	ctx.File("./frontend/dist/index.html")
 }

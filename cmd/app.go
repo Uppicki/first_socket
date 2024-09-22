@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"first_socket/internal/handlers"
-	"first_socket/internal/middleware"
-	"first_socket/internal/repositories"
+	//"first_socket/internal/handlers"
 	"first_socket/internal/store"
-	wsusermanager "first_socket/internal/ws_manager/user_manager"
 
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,32 +18,43 @@ func (app *App) Run() {
 }
 
 func NewApp() *App {
-	store := store.NewStore()
 
-	userRep := repositories.NewUserRepository(store)
+	/*
+		store := store.NewStore()
 
-	authHandler := handlers.NewAuthHandler(userRep)
-	trashHandler := handlers.NewTrashHandler(userRep)
 
-	wsUserManager := wsusermanager.NewWSUserManager(
-		userRep,
-	)
+
+		userRep := repositories.NewUserRepository(store)
+
+		authHandler := handlers.NewAuthHandler(userRep)
+		trashHandler := handlers.NewTrashHandler(userRep)
+
+		wsUserManager := wsusermanager.NewWSUserManager(
+			userRep,
+			nil,
+		)
+
+	*/
 
 	router := gin.Default()
 
-	router.GET("/", handlers.HelloHandler)
+	router.Use(static.Serve("/", static.LocalFile("./frontend/dist", false)))
 
-	router.GET("/users", trashHandler.GetAllUsers)
-	router.POST("/login", authHandler.LoginHandler)
+	// Обслуживание index.html на главной странице
+	//router.GET("/", handlers.HelloHandler)
 
-	wsprotected := router.Group(
-		"/ws",
-		middleware.KeyMIddleware(userRep),
-	)
-	{
-		wsprotected.GET("/", wsUserManager.ServeWS)
-	}
+	/*
+		router.GET("/users", trashHandler.GetAllUsers)
+		router.POST("/login", authHandler.LoginHandler)
 
+		wsprotected := router.Group(
+			"/ws",
+			middleware.KeyMIddleware(userRep),
+		)
+		{
+			wsprotected.GET("/", wsUserManager.ServeWS)
+		}
+	*/
 	return &App{
 		router: router,
 	}

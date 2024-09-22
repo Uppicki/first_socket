@@ -3,13 +3,14 @@ package cmd
 import (
 	//"first_socket/internal/handlers"
 	"first_socket/internal/store"
+	"fmt"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
 type App struct {
-	store  *store.Store
+	store  store.IStore
 	router *gin.Engine
 }
 
@@ -19,43 +20,18 @@ func (app *App) Run() {
 
 func NewApp() *App {
 
-	/*
-		store := store.NewStore()
-
-
-
-		userRep := repositories.NewUserRepository(store)
-
-		authHandler := handlers.NewAuthHandler(userRep)
-		trashHandler := handlers.NewTrashHandler(userRep)
-
-		wsUserManager := wsusermanager.NewWSUserManager(
-			userRep,
-			nil,
-		)
-
-	*/
+	str, errStr := store.NewStore("postgres")
+	if errStr != nil {
+		fmt.Println(errStr)
+		return nil
+	}
 
 	router := gin.Default()
 
 	router.Use(static.Serve("/", static.LocalFile("./frontend/dist", false)))
 
-	// Обслуживание index.html на главной странице
-	//router.GET("/", handlers.HelloHandler)
-
-	/*
-		router.GET("/users", trashHandler.GetAllUsers)
-		router.POST("/login", authHandler.LoginHandler)
-
-		wsprotected := router.Group(
-			"/ws",
-			middleware.KeyMIddleware(userRep),
-		)
-		{
-			wsprotected.GET("/", wsUserManager.ServeWS)
-		}
-	*/
 	return &App{
+		store:  str,
 		router: router,
 	}
 }

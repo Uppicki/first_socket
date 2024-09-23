@@ -1,21 +1,32 @@
 package cmd
 
 import (
-	//"first_socket/internal/handlers"
+	"first_socket/internal/handlers"
+	"first_socket/internal/repositories"
+	"first_socket/internal/router"
 	"first_socket/internal/store"
 	"fmt"
-
-	"github.com/gin-contrib/static"
-	"github.com/gin-gonic/gin"
 )
 
 type App struct {
 	store  store.IStore
-	router *gin.Engine
+	router *router.Router
+}
+
+func (app *App) Setup() {
+	app.store.Migrate()
+
+	userRepository := repositories.NewUserRepository(app.store)
+
+	authHandler := handlers.NewAuthHandler(userRepository)
+
+	app.router.SetupRoutes(
+		authHandler,
+	)
 }
 
 func (app *App) Run() {
-	app.router.Run(":5556")
+	app.router.Run()
 }
 
 func NewApp() *App {
@@ -26,9 +37,7 @@ func NewApp() *App {
 		return nil
 	}
 
-	router := gin.Default()
-
-	router.Use(static.Serve("/", static.LocalFile("./frontend/dist", false)))
+	router := router.NewRouter()
 
 	return &App{
 		store:  str,

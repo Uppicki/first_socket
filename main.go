@@ -15,5 +15,7 @@ func main() {
 
 	server := cmd.NewApp()
 
+	server.Setup()
+
 	server.Run()
 }

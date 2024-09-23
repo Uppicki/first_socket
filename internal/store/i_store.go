@@ -3,6 +3,7 @@ package store
 import "first_socket/internal/domain"
 
 type IStore interface {
+	Migrate() error
 	GetUserByLogin(string) (domain.User, error)
 	SaveUser(domain.User) error
 }

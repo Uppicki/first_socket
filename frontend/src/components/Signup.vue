@@ -49,6 +49,11 @@
 </template>
 
 <script>
+import StringConsts from '@/res/string_consts';
+import axios from 'axios';
+
+
+
 export default {
     name: 'SignupComponent',
     data() {
@@ -163,10 +168,23 @@ export default {
             }, 500); // Задержка в 500 мс
         },
         async checkLoginAvailability() {
-            setTimeout(() => {
-                const isLoginAvailable = Math.random() > 0.5; // Здесь может быть ваша логика проверки
-                this.loginState = isLoginAvailable ? 'valid' : 'invalid';
-            }, 1000);
+            console.log('API URL:', StringConsts.VUE_APP_API_URL);
+            try {
+                // Отправка POST-запроса для проверки логина
+                const response = await axios.get(`${StringConsts.VUE_APP_API_URL}/api/v1/auth/availableLogin`, {
+                    login: this.login // Передаем логин на сервер
+                });
+
+                // Обрабатываем ответ от сервера
+                if (response.data.is_available) {
+                    this.loginState = 'valid';
+                } else {
+                    this.loginState = 'invalid';
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке логина:', error);
+                this.loginState = 'invalid'; // Если произошла ошибка, устанавливаем логин как недоступный
+            }
         },
         handlePasswordInput() {
             this.passwordState = 'typing';

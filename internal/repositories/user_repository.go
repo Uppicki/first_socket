@@ -21,6 +21,12 @@ func (repo *UserRepository) CreateUser(user domain.User) error {
 	return err
 }
 
+func (repo *UserRepository) GetUserByLogin(login string) (domain.User, error) {
+	user, err := repo.store.GetUserByLogin(login)
+
+	return user, err
+}
+
 func NewUserRepository(store store.IStore) IUserRepository {
 	return &UserRepository{
 		BaseRepository: NewBaseRepository(store),

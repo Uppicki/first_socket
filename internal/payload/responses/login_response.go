@@ -1,5 +1,6 @@
 package responses
 
 type LoginResponse struct {
-	Login string `json:"login"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }

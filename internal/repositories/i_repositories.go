@@ -8,6 +8,7 @@ import (
 type IUserRepository interface {
 	IsLoginExsist(string) bool
 	CreateUser(user domain.User) error
+	GetUserByLogin(string) (domain.User, error)
 }
 
 type IClientRepository interface {

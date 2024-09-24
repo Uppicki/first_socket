@@ -102,6 +102,20 @@ func (handler *AuthHandler) LoginUser(ctx *gin.Context) {
 	})
 }
 
+func (handler *AuthHandler) CurrentUser(ctx *gin.Context) {
+	login, _ := ctx.Get("login")
+
+	loginStr, ok := login.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid login type"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, responses.UserInfoResponse{
+		Login: loginStr,
+	})
+}
+
 func NewAuthHandler(
 	repository repositories.IUserRepository,
 	tokenService services.ITokenService,

@@ -32,14 +32,10 @@ func (r *Router) SetupRoutes(
 		middleware.JWTMiddleware(tokenService),
 	)
 	{
-		protectedRoutes.GET(
-			"/", func(ctx *gin.Context) {
-
-				ctx.JSON(200, gin.H{
-					"asd": "AD",
-				},
-				)
-			})
+		authProtectedRoutes := protectedRoutes.Group("/auth")
+		{
+			authProtectedRoutes.GET("/", authHandler.CurrentUser)
+		}
 	}
 
 }

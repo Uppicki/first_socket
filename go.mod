@@ -5,6 +5,7 @@ go 1.21.0
 require github.com/gin-gonic/gin v1.10.0
 
 require (
+	github.com/gin-contrib/cors v1.7.2 // indirect
 	github.com/gin-contrib/static v1.1.2 // indirect
 	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

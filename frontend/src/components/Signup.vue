@@ -10,7 +10,6 @@
                         v-model="login"
                         @input="handleLoginInput"
                         :class="loginStateClass"
-                        pattern="[A-Za-z0-9!_]"
                         required/>
                     <span class="input-icon">{{ loginStateIcon }}</span>
                 </div>
@@ -42,7 +41,8 @@
                 </div>
                 <p class="repeat-password-status">{{ repeatPasswordErrorMessage }}</p>
 
-                <button type="submit" :disabled="!isFormValid">Зарегистрироваться</button>
+                <button type="submit" :disabled="!isFormValid || isSubmitting">Зарегистрироваться</button> <!-- Отключаем кнопку во время отправки -->
+
             </form>
         </div>
     </div>
@@ -69,7 +69,8 @@ export default {
             loginError: '', 
             passwordError: '',
             repeatePasswordError: '',
-            loginCheckTimeout: null // Таймер для дебаунсера
+            loginCheckTimeout: null, // Таймер для дебаунсера
+            isSubmitting: false, // Новое состояние
         }
     },
     computed: {
@@ -171,8 +172,12 @@ export default {
             console.log('API URL:', StringConsts.VUE_APP_API_URL);
             try {
                 // Отправка POST-запроса для проверки логина
-                const response = await axios.get(`${StringConsts.VUE_APP_API_URL}/api/v1/auth/availableLogin`, {
-                    login: this.login // Передаем логин на сервер
+                const response = await axios.get(
+                    `${StringConsts.VUE_APP_API_URL}/api/v1/auth/availableLogin`,
+                     {
+                    params: {
+                        login: this.login
+                    } // Передаем логин на сервер
                 });
 
                 // Обрабатываем ответ от сервера
@@ -216,7 +221,16 @@ export default {
                 this.passwordError = 'Пароль должен содержать цифры';
                 return;
             }
+            
             this.passwordState = 'valid';
+
+            if (this.repeatePassword === this.password && this.passwordState==='valid') {
+                this.repeatPasswordState = 'valid';
+                this.repeatePasswordError = '';
+            } else {
+                this.repeatPasswordState = 'invalid';
+                this.repeatePasswordError = 'Пароли не совпадают или пароль некорректный';
+            }
         },
         handleRepeatPasswordInput() {
             this.repeatPasswordState = 'typing';
@@ -229,9 +243,30 @@ export default {
                 this.repeatePasswordError = 'Пароли не совпадают или пароль некорректный';
             }
         },
-        signup() {
+        async signup() {
             if (this.isFormValid) {
-                alert(`Регистрация с логином ${this.login}`);
+                this.isSubmitting = true; // Блокируем форму
+                try {
+                    const userData = {
+                        login: this.login,
+                        password: this.password,
+                    };
+
+                    const response = await axios.post(
+                        `${StringConsts.VUE_APP_API_URL}/api/v1/auth/registr`, 
+                        userData);
+
+                    if (response.status === 201) {
+                        this.$router.push('/auth/login')
+                    } else {
+                        alert('Произошла ошибка при регистрации. Попробуйте еще раз.');
+                    }
+                    
+                } catch (error) {
+                    console.error('Ошибка при регистрации:', error);
+                } finally {
+                    this.isSubmitting = false; // Разблокируем форму
+                }
             }
         },
         togglePasswordVisibility() {

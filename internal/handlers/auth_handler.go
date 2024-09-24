@@ -5,7 +5,9 @@ import (
 	"first_socket/internal/payload/requests"
 	"first_socket/internal/payload/responses"
 	"first_socket/internal/repositories"
+	"fmt"
 	"net/http"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -18,7 +20,9 @@ type AuthHandler struct {
 func (handler *AuthHandler) AvailableLogin(ctx *gin.Context) {
 	login := ctx.Query("login")
 
-	isAvailable := (len(login) >= 5 && len(login) <= 32) && handler.repo.IsLoginExsist(login)
+	isValidLength := utf8.RuneCountInString(login) >= 5 && utf8.RuneCountInString(login) <= 32
+
+	isAvailable := isValidLength && handler.repo.IsLoginExsist(login)
 
 	ctx.JSON(http.StatusOK, responses.LoginAvailableResponse{
 		IsAvailable: isAvailable,
@@ -55,7 +59,7 @@ func (handler *AuthHandler) RegistrUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "User successfully registered"})
+	ctx.JSON(http.StatusCreated, gin.H{"message": "User successfully registered"})
 }
 
 func NewAuthHandler(repository repositories.IUserRepository) *AuthHandler {

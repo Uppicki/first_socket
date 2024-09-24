@@ -2,6 +2,7 @@ package router
 
 import (
 	"first_socket/internal/handlers"
+	"first_socket/internal/middleware"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ func (r *Router) SetupRoutes(
 	authHandler *handlers.AuthHandler,
 ) {
 	r.router.Use(static.Serve("/", static.LocalFile("./frontend/dist", false)))
+	r.router.Use(middleware.SetupCORSMidleware())
 
 	authRoutes := r.router.Group("/api/v1/auth")
 	{

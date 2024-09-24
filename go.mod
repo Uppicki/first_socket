@@ -8,6 +8,7 @@ require (
 	github.com/gin-contrib/cors v1.7.2 // indirect
 	github.com/gin-contrib/static v1.1.2 // indirect
 	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.7.1 // indirect

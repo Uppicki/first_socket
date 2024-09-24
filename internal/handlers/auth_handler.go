@@ -5,8 +5,10 @@ import (
 	"first_socket/internal/payload/requests"
 	"first_socket/internal/payload/responses"
 	"first_socket/internal/repositories"
-	"fmt"
+	"first_socket/internal/services"
+
 	"net/http"
+
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +17,8 @@ import (
 
 type AuthHandler struct {
 	repo repositories.IUserRepository
+
+	tokenService services.ITokenService
 }
 
 func (handler *AuthHandler) AvailableLogin(ctx *gin.Context) {
@@ -62,8 +66,48 @@ func (handler *AuthHandler) RegistrUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "User successfully registered"})
 }
 
-func NewAuthHandler(repository repositories.IUserRepository) *AuthHandler {
+func (handler *AuthHandler) LoginUser(ctx *gin.Context) {
+	var request requests.RegRequest
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	user, uErr := handler.repo.GetUserByLogin(request.Login)
+
+	if uErr != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": uErr.Error()})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	accessToken, refreshToken, err := handler.tokenService.CreateTokens(user.Login)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":       "Could not generate tokens",
+			"inner_error": err,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, responses.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
+}
+
+func NewAuthHandler(
+	repository repositories.IUserRepository,
+	tokenService services.ITokenService,
+) *AuthHandler {
 	return &AuthHandler{
-		repo: repository,
+		repo:         repository,
+		tokenService: tokenService,
 	}
 }

@@ -62,6 +62,20 @@ func (service *tokenService) VerifyToken(tokenString string) (string, error) {
 	return claims.Login, nil
 }
 
+func (service *tokenService) VerifyAccessToken(tokenString string) (string, error) {
+	claims, err := service.parseToken(tokenString)
+
+	if err != nil {
+		return "", err
+	}
+
+	if claims.Type == "access" {
+		return claims.Login, nil
+	}
+
+	return "", errorsRes.InvalidTokenError
+}
+
 func (service *tokenService) RefreshTokens(refreshTokenString string) (string, string, error) {
 	claims, err := service.parseToken(refreshTokenString)
 

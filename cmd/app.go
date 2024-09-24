@@ -4,6 +4,7 @@ import (
 	"first_socket/internal/handlers"
 	"first_socket/internal/repositories"
 	"first_socket/internal/router"
+	"first_socket/internal/services"
 	"first_socket/internal/store"
 	"fmt"
 )
@@ -18,9 +19,15 @@ func (app *App) Setup() {
 
 	userRepository := repositories.NewUserRepository(app.store)
 
-	authHandler := handlers.NewAuthHandler(userRepository)
+	tokenService := services.NewTokenService()
+
+	authHandler := handlers.NewAuthHandler(
+		userRepository,
+		tokenService,
+	)
 
 	app.router.SetupRoutes(
+		tokenService,
 		authHandler,
 	)
 }

@@ -116,6 +116,26 @@ func (handler *AuthHandler) CurrentUser(ctx *gin.Context) {
 	})
 }
 
+func (handler *AuthHandler) RefreshToken(ctx *gin.Context) {
+	var request requests.RefreshRequest
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	accessToken, refreshToken, tokenErr := handler.tokenService.RefreshTokens(request.RefreshToken)
+	if tokenErr != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": tokenErr.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, responses.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
+}
+
 func NewAuthHandler(
 	repository repositories.IUserRepository,
 	tokenService services.ITokenService,

@@ -169,7 +169,6 @@ export default {
             }, 500); // Задержка в 500 мс
         },
         async checkLoginAvailability() {
-            console.log('API URL:', StringConsts.VUE_APP_API_URL);
             try {
                 // Отправка POST-запроса для проверки логина
                 const response = await axios.get(
@@ -257,7 +256,7 @@ export default {
                         userData);
 
                     if (response.status === 201) {
-                        this.$router.push('/auth/login')
+                        this.$router.replace('/auth/login')
                     } else {
                         alert('Произошла ошибка при регистрации. Попробуйте еще раз.');
                     }

@@ -24,13 +24,17 @@
                 </div>
                 <p class="password-status">{{ errorMessage }}</p>
 
-                <button type="submit" :disabled="isSubmitting">Войти</button>
+                <button type="submit" :disabled="isSubmitting || !isFormValid">Войти</button>
             </form>
         </div>
     </div>
 </template>
 
 <script>
+import { mapActions } from 'vuex';
+import StringConsts from '@/res/string_consts';
+import axios from 'axios';
+
 export default {
     name: 'LoginComponent',
     data() {
@@ -51,6 +55,9 @@ export default {
         },
         passwordInputType() {
             return this.showPassword ? 'text' : 'password';
+        },
+        isFormValid() {
+            return this.login.length > 0 && this.password.length > 0
         }
     },
     methods: {
@@ -60,10 +67,38 @@ export default {
         handlePasswordInput() {
             this.password = event.target.value.replace(/[^A-Za-z0-9!_@#$%^&*()]/g, '');
         },
-        async signup() {
+        ...mapActions(['loginState']),
+        async signin() {
             if (this.isFormValid) {
-                alert(`Авторизация с логином ${this.login}`);
-                // Здесь можете выполнить вызов API для авторизации
+                this.isSubmitting = true
+
+                try {
+                    const response = await axios.post(
+                        `${StringConsts.VUE_APP_API_URL}/api/v1/auth/login`,
+                        {
+                            login: this.login,
+                            password: this.password
+                        }
+                    )
+
+                    if (response.status === 200) {
+                        this.loginState({
+                            userLogin: this.login,
+                            accessToken: response.data.access_token,
+                            refreshToken: response.data.refresh_token,
+                        })
+                        this.$router.back().back();
+                    } else {
+                        this.error = response.data
+                    }
+
+                } catch (error) {
+                    this.error = error
+                } finally {
+                    this.isSubmitting = false
+                }
+                
+                
             }
         },
         togglePasswordVisibility() {

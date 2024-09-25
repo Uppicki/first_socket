@@ -25,6 +25,7 @@ func (r *Router) SetupRoutes(
 		authRoutes.GET("/availableLogin", authHandler.AvailableLogin)
 		authRoutes.POST("/registr", authHandler.RegistrUser)
 		authRoutes.POST("/login", authHandler.LoginUser)
+		authRoutes.POST("/refresh", authHandler.RefreshToken)
 	}
 
 	protectedRoutes := r.router.Group(

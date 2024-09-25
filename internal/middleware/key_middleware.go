@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"first_socket/internal/repositories"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,16 +13,17 @@ func KeyMIddleware(
 	repository *repositories.UserRepository,
 ) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		key := ctx.GetHeader(apiKeyHeader)
+		/*
+			key := ctx.GetHeader(apiKeyHeader)
 
-		user, err := repository.GetUserByName(key)
+			user, err := repository.
 
-		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
-			return
-		}
+			if err != nil {
+				ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+				return
+			}
 
-		ctx.Set(UserContextKey, user)
+			ctx.Set(UserContextKey, user)*/
 
 		ctx.Next()
 	}

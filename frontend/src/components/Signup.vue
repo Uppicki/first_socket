@@ -10,7 +10,6 @@
                         v-model="login"
                         @input="handleLoginInput"
                         :class="loginStateClass"
-                        pattern="[A-Za-z0-9!_]"
                         required/>
                     <span class="input-icon">{{ loginStateIcon }}</span>
                 </div>
@@ -42,13 +41,19 @@
                 </div>
                 <p class="repeat-password-status">{{ repeatPasswordErrorMessage }}</p>
 
-                <button type="submit" :disabled="!isFormValid">Зарегистрироваться</button>
+                <button type="submit" :disabled="!isFormValid || isSubmitting">Зарегистрироваться</button> <!-- Отключаем кнопку во время отправки -->
+
             </form>
         </div>
     </div>
 </template>
 
 <script>
+import StringConsts from '@/res/string_consts';
+import axios from 'axios';
+
+
+
 export default {
     name: 'SignupComponent',
     data() {
@@ -64,7 +69,8 @@ export default {
             loginError: '', 
             passwordError: '',
             repeatePasswordError: '',
-            loginCheckTimeout: null // Таймер для дебаунсера
+            loginCheckTimeout: null, // Таймер для дебаунсера
+            isSubmitting: false, // Новое состояние
         }
     },
     computed: {
@@ -163,10 +169,26 @@ export default {
             }, 500); // Задержка в 500 мс
         },
         async checkLoginAvailability() {
-            setTimeout(() => {
-                const isLoginAvailable = Math.random() > 0.5; // Здесь может быть ваша логика проверки
-                this.loginState = isLoginAvailable ? 'valid' : 'invalid';
-            }, 1000);
+            try {
+                // Отправка POST-запроса для проверки логина
+                const response = await axios.get(
+                    `${StringConsts.VUE_APP_API_URL}/api/v1/auth/availableLogin`,
+                     {
+                    params: {
+                        login: this.login
+                    } // Передаем логин на сервер
+                });
+
+                // Обрабатываем ответ от сервера
+                if (response.data.is_available) {
+                    this.loginState = 'valid';
+                } else {
+                    this.loginState = 'invalid';
+                }
+            } catch (error) {
+                console.error('Ошибка при проверке логина:', error);
+                this.loginState = 'invalid'; // Если произошла ошибка, устанавливаем логин как недоступный
+            }
         },
         handlePasswordInput() {
             this.passwordState = 'typing';
@@ -198,7 +220,16 @@ export default {
                 this.passwordError = 'Пароль должен содержать цифры';
                 return;
             }
+            
             this.passwordState = 'valid';
+
+            if (this.repeatePassword === this.password && this.passwordState==='valid') {
+                this.repeatPasswordState = 'valid';
+                this.repeatePasswordError = '';
+            } else {
+                this.repeatPasswordState = 'invalid';
+                this.repeatePasswordError = 'Пароли не совпадают или пароль некорректный';
+            }
         },
         handleRepeatPasswordInput() {
             this.repeatPasswordState = 'typing';
@@ -211,9 +242,30 @@ export default {
                 this.repeatePasswordError = 'Пароли не совпадают или пароль некорректный';
             }
         },
-        signup() {
+        async signup() {
             if (this.isFormValid) {
-                alert(`Регистрация с логином ${this.login}`);
+                this.isSubmitting = true; // Блокируем форму
+                try {
+                    const userData = {
+                        login: this.login,
+                        password: this.password,
+                    };
+
+                    const response = await axios.post(
+                        `${StringConsts.VUE_APP_API_URL}/api/v1/auth/registr`, 
+                        userData);
+
+                    if (response.status === 201) {
+                        this.$router.replace('/auth/login')
+                    } else {
+                        alert('Произошла ошибка при регистрации. Попробуйте еще раз.');
+                    }
+                    
+                } catch (error) {
+                    console.error('Ошибка при регистрации:', error);
+                } finally {
+                    this.isSubmitting = false; // Разблокируем форму
+                }
             }
         },
         togglePasswordVisibility() {

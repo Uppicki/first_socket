@@ -1,6 +1,15 @@
 package repositories
 
-import wsclient "first_socket/internal/ws_manager/ws_client"
+import (
+	"first_socket/internal/domain"
+	wsclient "first_socket/internal/ws_manager/ws_client"
+)
+
+type IUserRepository interface {
+	IsLoginExsist(string) bool
+	CreateUser(user domain.User) error
+	GetUserByLogin(string) (domain.User, error)
+}
 
 type IClientRepository interface {
 	AddClient(wsclient.WSClient)

@@ -38,7 +38,13 @@ func (service *WSService) ServeWS(
 }
 
 func (service *WSService) Listen(client wsserviceclient.IWSClient) {
-
+	channel := client.GetReceivedChan()
+	for {
+		select {
+		case message := <-channel:
+			message.Map()
+		}
+	}
 }
 
 func (service *WSService) CreateConnection(

@@ -1,22 +1,36 @@
 package wsservicerepository
 
 import (
-	"first_socket/pkg/ws_service/client"
+	wsclient "first_socket/pkg/ws_service/client"
+	store "first_socket/pkg/ws_service/store"
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+	wsrequest "first_socket/pkg/ws_service/ws_request"
 
 	"github.com/gorilla/websocket"
 )
 
-type IClientRepository interface {
-	CreateClient(string, string, *websocket.Conn) wsserviceclient.IWSClient
-	AddClient(wsserviceclient.IWSClient) error
+type IClientRepository[
+	WSMessage wsmessage.IWSMessage,
+] interface {
+	CreateClient(string, string, *websocket.Conn) wsclient.IWSClient[WSMessage]
+	AddClient(wsclient.IWSClient[WSMessage]) error
 
 	RemoveUser(string)
 
 	RemoveClient(string, string)
 
-	GetUserClients(string) []wsserviceclient.IWSClient
+	GetUserClients(string) []wsclient.IWSClient[WSMessage]
 
-	GetUserWithoutClient(string, string) []wsserviceclient.IWSClient
+	GetUserWithoutClient(string, string) []wsclient.IWSClient[WSMessage]
 
-	GetUsersClients([]string) []wsserviceclient.IWSClient
+	GetUsersClients([]string) []wsclient.IWSClient[WSMessage]
+}
+
+func NewClientRepository[
+	WSMessage wsmessage.IWSMessage,
+	WSRequest wsrequest.IWSRequest,
+]() IClientRepository[WSMessage] {
+	return &clientRepository[WSMessage, WSRequest]{
+		store: store.NewLocalStore(),
+	}
 }

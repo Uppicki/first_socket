@@ -1,24 +1,27 @@
 package wsserviceclient
 
 import (
-	"first_socket/pkg/ws_service/payload/request"
-	"first_socket/pkg/ws_service/ws_message"
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+	wsrequest "first_socket/pkg/ws_service/ws_request"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-type wsClient struct {
+type wsClient[
+	WSMessage wsmessage.IWSMessage,
+	WSRequest wsrequest.IWSRequest,
+] struct {
 	conn            *websocket.Conn
 	ownerLogin      string
 	connKey         string
-	sendedMessage   chan wsservicemessage.IWSMessage
-	receivedMessage chan wsservicemessage.IWSMessage
+	sendedMessage   chan WSMessage
+	receivedMessage chan WSMessage
 	isActive        bool
 	mu              sync.Mutex
 }
 
-func (client *wsClient) Run() {
+func (client *wsClient[WSMessage, WSRequest]) Run() {
 	client.mu.Lock()
 	client.isActive = true
 	client.mu.Unlock()
@@ -26,38 +29,38 @@ func (client *wsClient) Run() {
 	go client.writerRun()
 }
 
-func (client *wsClient) readerRun() {
+func (client *wsClient[WSMessage, WSRequest]) readerRun() {
 	defer func() {
 		client.mu.Lock()
 		if client.isActive {
-			client.receivedMessage <- wsservicemessage.DisconnectedMessage(
+			client.receivedMessage <- wsmessage.DisconnectedMessage(
 				client.ownerLogin,
-			)
+			).(WSMessage)
 			client.isActive = false
 		}
 		client.mu.Unlock()
 	}()
 
-	client.receivedMessage <- wsservicemessage.ConnectedMessage(
+	client.receivedMessage <- wsmessage.ConnectedMessage(
 		client.ownerLogin,
-	)
+	).(WSMessage)
 
 	for client.isActive {
-		var req wsservicerequests.IWSRequest
+		var req WSRequest
 
 		if err := client.conn.ReadJSON(&req); err != nil {
 			break
 		}
 
 		if message, err := req.ToMessage(); err == nil {
-			client.receivedMessage <- message
+			client.receivedMessage <- message.(WSMessage)
 		} else {
 			break
 		}
 	}
 }
 
-func (client *wsClient) writerRun() {
+func (client *wsClient[WSMessage, WSRequest]) writerRun() {
 	for client.isActive {
 		select {
 		case message := <-client.sendedMessage:
@@ -73,18 +76,18 @@ func (client *wsClient) writerRun() {
 	}
 }
 
-func (client *wsClient) GetReceivedChan() <-chan wsservicemessage.IWSMessage {
+func (client *wsClient[WSMessage, WSRequest]) GetReceivedChan() <-chan WSMessage {
 	return client.receivedMessage
 }
 
-func (client *wsClient) Send(message wsservicemessage.IWSMessage) {
+func (client *wsClient[WSMessage, WSRequest]) Send(message WSMessage) {
 	select {
 	case client.sendedMessage <- message:
 	default:
 	}
 }
 
-func (client *wsClient) Close() {
+func (client *wsClient[WSMessage, WSRequest]) Close() {
 	client.mu.Lock()
 	defer client.mu.Unlock()
 
@@ -94,10 +97,10 @@ func (client *wsClient) Close() {
 	close(client.receivedMessage)
 }
 
-func (client *wsClient) GetOwnerLogin() string {
+func (client *wsClient[WSMessage, WSRequest]) GetOwnerLogin() string {
 	return client.ownerLogin
 }
 
-func (client *wsClient) GetConnKey() string {
+func (client *wsClient[WSMessage, WSRequest]) GetConnKey() string {
 	return client.connKey
 }

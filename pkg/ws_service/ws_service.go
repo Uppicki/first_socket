@@ -1,18 +1,22 @@
 package wsservice
 
 import (
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+
 	wsserviceclient "first_socket/pkg/ws_service/client"
-	"first_socket/pkg/ws_service/hub"
+	wsservicehub "first_socket/pkg/ws_service/hub"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 )
 
-type WSService struct {
-	hub wsservicehub.IWSClientHub
+type wsService[
+	WSMessage wsmessage.IWSMessage,
+] struct {
+	hub wsservicehub.IWSClientHub[WSMessage]
 }
 
-func (service *WSService) ServeWS(
+func (service *wsService[WSMessage]) ServeWS(
 	owner string,
 	connKey string,
 	payload Payload,
@@ -37,7 +41,9 @@ func (service *WSService) ServeWS(
 	return nil
 }
 
-func (service *WSService) Listen(client wsserviceclient.IWSClient) {
+func (service *wsService[WSMessage]) Listen(
+	client wsserviceclient.IWSClient[WSMessage],
+) {
 	channel := client.GetReceivedChan()
 	for {
 		select {
@@ -47,7 +53,7 @@ func (service *WSService) Listen(client wsserviceclient.IWSClient) {
 	}
 }
 
-func (service *WSService) CreateConnection(
+func (service *wsService[WSMessage]) CreateConnection(
 	writer http.ResponseWriter,
 	request *http.Request,
 	header http.Header,

@@ -3,21 +3,21 @@ package wsservicehub
 import (
 	wsserviceclient "first_socket/pkg/ws_service/client"
 	wsservicerepository "first_socket/pkg/ws_service/repository"
-	wsservicemessage "first_socket/pkg/ws_service/ws_message"
+	wsmessage "first_socket/pkg/ws_service/ws_message"
 
 	"github.com/gorilla/websocket"
 )
 
-type hub struct {
-	clientRepo wsservicerepository.IClientRepository
+type hub[WSMessage wsmessage.IWSMessage] struct {
+	clientRepo wsservicerepository.IClientRepository[WSMessage]
 }
 
-func (hub *hub) AddClient(
+func (hub *hub[WSMessage]) AddClient(
 	ownerLogin string,
 	connKey string,
 	conn *websocket.Conn,
 ) (
-	wsserviceclient.IWSClient,
+	wsserviceclient.IWSClient[WSMessage],
 	error,
 ) {
 	client := hub.clientRepo.CreateClient(ownerLogin, connKey, conn)
@@ -29,45 +29,45 @@ func (hub *hub) AddClient(
 	return client, nil
 }
 
-func (hub *hub) RemoveUser(ownerLogin string) {
+func (hub *hub[WSMessage]) RemoveUser(ownerLogin string) {
 	hub.clientRepo.RemoveUser(ownerLogin)
 }
 
-func (hub *hub) RemoveUserClient(ownerLogin string, connKey string) {
+func (hub *hub[WSMessage]) RemoveUserClient(ownerLogin string, connKey string) {
 	hub.clientRepo.RemoveClient(ownerLogin, connKey)
 }
 
-func (hub *hub) SendUser(
+func (hub *hub[WSMessage]) SendUser(
 	ownerLogin string,
-	message wsservicemessage.IWSMessage,
+	message WSMessage,
 ) {
 	clients := hub.clientRepo.GetUserClients(ownerLogin)
 
 	hub.sendClients(clients, message)
 }
 
-func (hub *hub) SendUserWithoutClient(
+func (hub *hub[WSMessage]) SendUserWithoutClient(
 	ownerLogin string,
 	connKey string,
-	message wsservicemessage.IWSMessage,
+	message WSMessage,
 ) {
 	clients := hub.clientRepo.GetUserWithoutClient(ownerLogin, connKey)
 
 	hub.sendClients(clients, message)
 }
 
-func (hub *hub) SendUsers(
+func (hub *hub[WSMessage]) SendUsers(
 	ownerLogins []string,
-	message wsservicemessage.IWSMessage,
+	message WSMessage,
 ) {
 	clients := hub.clientRepo.GetUsersClients(ownerLogins)
 
 	hub.sendClients(clients, message)
 }
 
-func (hub *hub) sendClients(
-	clients []wsserviceclient.IWSClient,
-	message wsservicemessage.IWSMessage,
+func (hub *hub[WSMessage]) sendClients(
+	clients []wsserviceclient.IWSClient[WSMessage],
+	message WSMessage,
 ) {
 	for _, client := range clients {
 		client.Send(message)

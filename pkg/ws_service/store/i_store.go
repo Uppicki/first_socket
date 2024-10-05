@@ -1,17 +1,19 @@
 package wsservicestore
 
 import (
-	"first_socket/pkg/ws_service/client"
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+
+	wsclient "first_socket/pkg/ws_service/client"
 )
 
-type IStore interface {
-	AddClient(wsserviceclient.IWSClient) error
+type IStore[WSMessage wsmessage.IWSMessage] interface {
+	AddClient(wsclient.IWSClient[WSMessage]) error
 
 	RemoveUser(string)
 	RemoveClient(string, string)
 
-	GetUserClients(string) []wsserviceclient.IWSClient
-	GetUserWithoutClient(string, string) []wsserviceclient.IWSClient
+	GetUserClients(string) []wsclient.IWSClient[WSMessage]
+	GetUserWithoutClient(string, string) []wsclient.IWSClient[WSMessage]
 
-	GetUsersClients([]string) []wsserviceclient.IWSClient
+	GetUsersClients([]string) []wsclient.IWSClient[WSMessage]
 }

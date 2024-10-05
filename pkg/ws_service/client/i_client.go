@@ -1,33 +1,37 @@
 package wsserviceclient
 
 import (
-	"first_socket/pkg/ws_service/ws_message"
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+	wsrequest "first_socket/pkg/ws_service/ws_request"
 
 	"github.com/gorilla/websocket"
 )
 
-type IWSClient interface {
+type IWSClient[WSMessage wsmessage.IWSMessage] interface {
 	Run()
 	Close()
 
-	GetReceivedChan() <-chan wsservicemessage.IWSMessage
-	Send(wsservicemessage.IWSMessage)
+	GetReceivedChan() <-chan WSMessage
+	Send(WSMessage)
 
 	GetOwnerLogin() string
 	GetConnKey() string
 }
 
-func NewWSClient(
+func NewWSClient[
+	WSMessage wsmessage.IWSMessage,
+	WSRequest wsrequest.IWSRequest,
+](
 	ownerLogin string,
 	connKey string,
 	conn *websocket.Conn,
-) IWSClient {
-	return &wsClient{
+) IWSClient[WSMessage] {
+	return &wsClient[WSMessage, WSRequest]{
 		ownerLogin:      ownerLogin,
 		connKey:         connKey,
 		conn:            conn,
-		sendedMessage:   make(chan wsservicemessage.IWSMessage),
-		receivedMessage: make(chan wsservicemessage.IWSMessage),
+		sendedMessage:   make(chan WSMessage),
+		receivedMessage: make(chan WSMessage),
 		isActive:        false,
 	}
 }

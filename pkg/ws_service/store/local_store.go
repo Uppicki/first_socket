@@ -1,16 +1,18 @@
 package wsservicestore
 
 import (
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+
 	"errors"
 	"first_socket/pkg/ws_service/client"
 )
 
-type localStore struct {
-	clients map[string]map[string]wsserviceclient.IWSClient
+type localStore[WSMessage wsmessage.IWSMessage] struct {
+	clients map[string]map[string]wsserviceclient.IWSClient[WSMessage]
 }
 
-func (store *localStore) AddClient(
-	client wsserviceclient.IWSClient,
+func (store *localStore[WSMessage]) AddClient(
+	client wsserviceclient.IWSClient[WSMessage],
 ) error {
 	login, connKey := client.GetOwnerLogin(), client.GetConnKey()
 
@@ -19,7 +21,7 @@ func (store *localStore) AddClient(
 	}
 
 	if _, ok := store.clients[login]; !ok {
-		store.clients[login] = make(map[string]wsserviceclient.IWSClient)
+		store.clients[login] = make(map[string]wsserviceclient.IWSClient[WSMessage])
 	}
 
 	store.clients[login][connKey] = client
@@ -27,7 +29,7 @@ func (store *localStore) AddClient(
 	return nil
 }
 
-func (store *localStore) RemoveUser(login string) {
+func (store *localStore[WSMessage]) RemoveUser(login string) {
 	if user, ok := store.clients[login]; ok {
 		for _, client := range user {
 			client.Close()
@@ -36,7 +38,7 @@ func (store *localStore) RemoveUser(login string) {
 	}
 }
 
-func (store *localStore) RemoveClient(login string, connKey string) {
+func (store *localStore[WSMessage]) RemoveClient(login string, connKey string) {
 	if user, ok := store.clients[login]; ok {
 		if client, ok := user[connKey]; ok {
 			client.Close()
@@ -49,8 +51,8 @@ func (store *localStore) RemoveClient(login string, connKey string) {
 	}
 }
 
-func (store *localStore) GetUserClients(login string) []wsserviceclient.IWSClient {
-	clients := make([]wsserviceclient.IWSClient, 0)
+func (store *localStore[WSMessage]) GetUserClients(login string) []wsserviceclient.IWSClient[WSMessage] {
+	clients := make([]wsserviceclient.IWSClient[WSMessage], 0)
 
 	if user, ok := store.clients[login]; ok {
 		for _, client := range user {
@@ -61,11 +63,11 @@ func (store *localStore) GetUserClients(login string) []wsserviceclient.IWSClien
 	return clients
 }
 
-func (store *localStore) GetUserWithoutClient(
+func (store *localStore[WSMessage]) GetUserWithoutClient(
 	login string,
 	connKey string,
-) []wsserviceclient.IWSClient {
-	clients := make([]wsserviceclient.IWSClient, 0)
+) []wsserviceclient.IWSClient[WSMessage] {
+	clients := make([]wsserviceclient.IWSClient[WSMessage], 0)
 
 	if user, ok := store.clients[login]; ok {
 		for _, client := range user {
@@ -78,8 +80,8 @@ func (store *localStore) GetUserWithoutClient(
 	return clients
 }
 
-func (store *localStore) GetUsersClients(logins []string) []wsserviceclient.IWSClient {
-	clients := make([]wsserviceclient.IWSClient, 0)
+func (store *localStore[WSMessage]) GetUsersClients(logins []string) []wsserviceclient.IWSClient[WSMessage] {
+	clients := make([]wsserviceclient.IWSClient[WSMessage], 0)
 
 	for _, login := range logins {
 		if user, ok := store.clients[login]; ok {
@@ -92,8 +94,8 @@ func (store *localStore) GetUsersClients(logins []string) []wsserviceclient.IWSC
 	return clients
 }
 
-func NewLocalStore() IStore {
-	return &localStore{
-		clients: make(map[string]map[string]wsserviceclient.IWSClient),
+func NewLocalStore[WSMessage wsmessage.IWSMessage]() IStore[WSMessage] {
+	return &localStore[WSMessage]{
+		clients: make(map[string]map[string]wsserviceclient.IWSClient[WSMessage]),
 	}
 }

@@ -1,58 +1,64 @@
 package wsservicerepository
 
 import (
+	wsmessage "first_socket/pkg/ws_service/ws_message"
+	wsrequest "first_socket/pkg/ws_service/ws_request"
+
 	client "first_socket/pkg/ws_service/client"
 	wsservicestore "first_socket/pkg/ws_service/store"
 
 	"github.com/gorilla/websocket"
 )
 
-type clientRepository struct {
-	store wsservicestore.IStore
+type clientRepository[
+	WSMessage wsmessage.IWSMessage,
+	WSRequest wsrequest.IWSRequest,
+] struct {
+	store wsservicestore.IStore[WSMessage]
 }
 
-func (repo *clientRepository) CreateClient(
+func (repo *clientRepository[WSMessage, WSRequest]) CreateClient(
 	ownerLogin string,
 	connKey string,
 	conn *websocket.Conn,
-) client.IWSClient {
-	return client.NewWSClient(ownerLogin, connKey, conn)
+) client.IWSClient[WSMessage] {
+	return client.NewWSClient[WSMessage, WSRequest](ownerLogin, connKey, conn)
 }
 
-func (repo *clientRepository) AddClient(
-	client client.IWSClient,
+func (repo *clientRepository[WSMessage, WSRequest]) AddClient(
+	client client.IWSClient[WSMessage],
 ) error {
 	return repo.AddClient(client)
 }
 
-func (repo *clientRepository) RemoveUser(
+func (repo *clientRepository[WSMessage, WSRequest]) RemoveUser(
 	ownerLogin string,
 ) {
 	repo.store.RemoveUser(ownerLogin)
 }
 
-func (repo *clientRepository) RemoveClient(
+func (repo *clientRepository[WSMessage, WSRequest]) RemoveClient(
 	ownerLogin string,
 	connKey string,
 ) {
 	repo.store.RemoveClient(ownerLogin, connKey)
 }
 
-func (repo *clientRepository) GetUserClients(
+func (repo *clientRepository[WSMessage, WSRequest]) GetUserClients(
 	ownerLogin string,
-) []client.IWSClient {
+) []client.IWSClient[WSMessage] {
 	return repo.store.GetUserClients(ownerLogin)
 }
 
-func (repo *clientRepository) GetUserWithoutClient(
+func (repo *clientRepository[WSMessage, WSRequest]) GetUserWithoutClient(
 	ownerLogin string,
 	connKey string,
-) []client.IWSClient {
+) []client.IWSClient[WSMessage] {
 	return repo.store.GetUserWithoutClient(ownerLogin, connKey)
 }
 
-func (repo *clientRepository) GetUsersClients(
+func (repo *clientRepository[WSMessage, WSRequest]) GetUsersClients(
 	logins []string,
-) []client.IWSClient {
+) []client.IWSClient[WSMessage] {
 	return repo.GetUsersClients(logins)
 }

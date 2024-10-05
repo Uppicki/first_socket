@@ -9,6 +9,10 @@ func (m *WSMessage) Map() {
 
 }
 
+func (m *WSMessage) ToResponse() (any, error) {
+	return nil, nil
+}
+
 func DisconnectedMessage(owner string) IWSMessage {
 	return &WSMessage{
 		MessageType: DisconnectedType,

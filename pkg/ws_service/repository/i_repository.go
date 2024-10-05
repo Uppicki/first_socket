@@ -31,6 +31,6 @@ func NewClientRepository[
 	WSRequest wsrequest.IWSRequest,
 ]() IClientRepository[WSMessage] {
 	return &clientRepository[WSMessage, WSRequest]{
-		store: store.NewLocalStore(),
+		store: store.NewLocalStore[WSMessage](),
 	}
 }

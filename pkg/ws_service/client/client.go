@@ -85,6 +85,13 @@ func (client *wsClient) Send(message wsservicemessage.IWSMessage) {
 }
 
 func (client *wsClient) Close() {
+	client.mu.Lock()
+	defer client.mu.Unlock()
+
+	client.isActive = false
+	client.conn.Close()
+	close(client.sendedMessage)
+	close(client.receivedMessage)
 }
 
 func (client *wsClient) GetOwnerLogin() string {

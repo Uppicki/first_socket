@@ -3,8 +3,6 @@ package wsservicestore
 import (
 	"errors"
 	"first_socket/pkg/ws_service/client"
-
-	"github.com/gorilla/websocket"
 )
 
 type localStore struct {

@@ -28,7 +28,7 @@ func (repo *clientRepository[WSMessage, WSRequest]) CreateClient(
 func (repo *clientRepository[WSMessage, WSRequest]) AddClient(
 	client client.IWSClient[WSMessage],
 ) error {
-	return repo.AddClient(client)
+	return repo.store.AddClient(client)
 }
 
 func (repo *clientRepository[WSMessage, WSRequest]) RemoveUser(

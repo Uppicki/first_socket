@@ -60,5 +60,5 @@ func (repo *clientRepository[WSMessage, WSRequest]) GetUserWithoutClient(
 func (repo *clientRepository[WSMessage, WSRequest]) GetUsersClients(
 	logins []string,
 ) []client.IWSClient[WSMessage] {
-	return repo.GetUsersClients(logins)
+	return repo.store.GetUsersClients(logins)
 }

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	stringsRes "first_socket/internal/res/strings"
 	"first_socket/internal/services"
 	"net/http"
 
@@ -41,7 +42,7 @@ func JWTMiddleware(
 			return
 		}
 
-		ctx.Set("login", login)
+		ctx.Set(stringsRes.LoginHeaderKey, login)
 		ctx.Next()
 	}
 }

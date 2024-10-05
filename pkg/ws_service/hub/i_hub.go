@@ -1,7 +1,8 @@
 package wsservicehub
 
 import (
-	wsserviceclient "first_socket/pkg/ws_service/client"
+	"first_socket/pkg/ws_service/client"
+	wsservicemessage "first_socket/pkg/ws_service/ws_message"
 
 	"github.com/gorilla/websocket"
 )
@@ -11,4 +12,10 @@ type IWSClientHub interface {
 		wsserviceclient.IWSClient,
 		error,
 	)
+	RemoveUser(string)
+	RemoveUserClient(string, string)
+
+	SendUser(string, wsservicemessage.IWSMessage)
+	SendUserWithoutClient(string, string, wsservicemessage.IWSMessage)
+	SendUsers([]string, wsservicemessage.IWSMessage)
 }

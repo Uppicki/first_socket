@@ -7,5 +7,8 @@ type ITokenService interface {
 	RefreshTokens(string) (string, string, error)
 }
 
+type IChatService interface {
+}
+
 type IUserService interface {
 }

@@ -84,6 +84,13 @@ func (client *wsClient) Send(message wsservicemessage.IWSMessage) {
 	}
 }
 
-func NewWSClient() IWSClient {
-	return &wsClient{}
+func (client *wsClient) Close() {
+}
+
+func (client *wsClient) GetOwnerLogin() string {
+	return client.ownerLogin
+}
+
+func (client *wsClient) GetConnKey() string {
+	return client.connKey
 }
